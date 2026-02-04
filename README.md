@@ -1,6 +1,6 @@
 # Discord Bot Starter
 
-Simple Python/discord.py bot with a `/hello` slash command and `.env` configuration.
+Simple Python/discord.py bot whose source lives under `src/` (`src/main.py` plus commands in `src/command/`). `/chal hello` and `/chal pullrepo` are defined as slash commands that rely on the `.env` configuration; git interactions are centralized in `src/git.py`.
 
 ## Setup
 
@@ -21,7 +21,7 @@ Simple Python/discord.py bot with a `/hello` slash command and `.env` configurat
 Start the bot with:
 
 ```bash
-python bot.py
+python src/main.py
 ```
 
 After it logs in you can run `/chal hello` to receive `Hello {username}` and `/chal pullrepo` to sync the configured GitHub repo into `challenge_repo` and to populate a forum thread per challenge.
@@ -34,7 +34,7 @@ In `.env`, set `GITHUB_REPO_URL`. The bot exposes `/chal pullrepo`, which clones
 
 `/chal pullrepo` simply forwards to Git, so private repositories work as long as the host user is already authenticated. For HTTPS repositories you can either cache a Personal Access Token (PAT) with `git config --global credential.helper cache` or embed the PAT in the URL (`https://<PAT>@github.com/owner/repo.git`) provided `.env` stays secret. For SSH repositories, set `GITHUB_REPO_URL=git@github.com:owner/repo.git` and make sure the machine running the bot has the corresponding private key available (e.g., via `ssh-agent` and a configured `~/.ssh/config` entry).
 
-Run `/chal pullrepo` from Discord (after inviting the bot with `applications.commands`) and the bot replies with success/failure feedback in the channel or as an ephemeral error message. The command always targets `challenge_repo`, and because `FORUM_CHANNEL_ID` is set it also keeps the configured forum channel up to date (thread IDs and content hashes are cached in `challenge_threads.json`). Each thread’s first message is now sent as an embed, and when you rerun `/chal pullrepo` the embed is edited whenever the `challenge.yml` hash changes. Because `GUILD_ID` is required, the slash command syncs into that guild right away instead of waiting for global propagation.
+Run `/chal pullrepo` from Discord (after inviting the bot with `applications.commands`) and the bot replies with success/failure feedback in the channel or as an ephemeral error message. The command always targets `challenge_repo`, and because `FORUM_CHANNEL_ID` is set it also keeps the configured forum channel up to date (thread IDs, tag assignments, and content hashes are cached in `challenge_threads.json`). Each thread’s first message is now sent as an embed (with tags mirrored in the embed and as forum tags), and when you rerun `/chal pullrepo` the embed plus forum tags are re-applied whenever the `challenge.yml` hash changes. Because `GUILD_ID` is required, the slash command syncs into that guild right away instead of waiting for global propagation.
 
 ## Notes
 
