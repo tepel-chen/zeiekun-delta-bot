@@ -6,25 +6,29 @@ import discord
 from discord import Interaction, app_commands
 
 from challenge import Challenge
+from command.utils import ensure_in_category
 from forum_sync import calculate_repo_base, ensure_challenge_threads, get_forum_channel
 from git import sync_repository
 
 
-def register_pullrepo_command(
+def register_pull_command(
     group: app_commands.Group,
     bot: discord.Client,
     forum_channel_id: int,
     challenge_repo_path: Path,
     thread_state_file: Path,
     repo_url: str,
+    category_id: int,
 ) -> None:
     challenge_root = challenge_repo_path / "challenges"
     repo_base = calculate_repo_base(repo_url)
 
     @group.command(
-        name="pullrepo", description="Githubのレポジトリと同期してフォーラムスレッドを用意する"
+        name="pull", description="Githubのレポジトリと同期してフォーラムスレッドを用意する"
     )
-    async def pullrepo(interaction: Interaction) -> None:
+    async def pull(interaction: Interaction) -> None:
+        if not await ensure_in_category(interaction, category_id):
+            return
         """Clone or update the repository and keep forum threads aligned."""
         await interaction.response.defer(thinking=True)
 

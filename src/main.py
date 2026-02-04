@@ -6,7 +6,7 @@ from discord import app_commands
 from dotenv import load_dotenv
 
 from command.hello import register_hello_command
-from command.pullrepo import register_pullrepo_command
+from command.pull import register_pull_command
 from command.setmeta import register_set_command
 from command.info_status import register_info_status_command
 from command.info_category import register_info_category_command
@@ -50,8 +50,7 @@ guild_obj = discord.Object(id=GUILD_ID)
 chal_commands = app_commands.Group(name="chal", description="チャレンジ制作関連")
 tree.add_command(chal_commands, guild=guild_obj)
 
-register_hello_command(chal_commands)
-register_pullrepo_command(
+register_pull_command(
     chal_commands,
     bot,
     forum_channel_id=FORUM_CHANNEL_ID,
