@@ -35,19 +35,11 @@ def format_challenge_line(
     challenge: Challenge,
     thread_record: Optional[Dict[str, int]],
 ) -> str:
-    mention = ""
     if thread_record:
         thread_id = thread_record.get("thread_id")
         if thread_id:
-            mention = f" (<#{thread_id}>)"
-    parts: List[str] = []
-    if challenge.category:
-        parts.append(challenge.category)
-    if challenge.difficulty:
-        parts.append(challenge.difficulty)
-    display = challenge.display_name or challenge.folder_name or challenge.key
-    base = f"{' / '.join(parts)} {display} (`{challenge.key}`)"
-    return f"{base}{mention}"
+            return f"<#{thread_id}>"
+    return f"[{challenge.category}] {challenge.display_name}"
 
 
 def group_challenges_by_status(challenges: List[Challenge]) -> Dict[str, List[Challenge]]:
