@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from command.hello import register_hello_command
 from command.pullrepo import register_pullrepo_command
+from command.setmeta import register_set_command
 
 
 def require_env_variable(name: str) -> str:
@@ -48,6 +49,14 @@ tree.add_command(chal_commands, guild=guild_obj)
 
 register_hello_command(chal_commands)
 register_pullrepo_command(
+    chal_commands,
+    bot,
+    forum_channel_id=FORUM_CHANNEL_ID,
+    challenge_repo_path=CHALLENGE_REPO_PATH,
+    thread_state_file=THREAD_STATE_FILE,
+    repo_url=GITHUB_REPO_URL,
+)
+register_set_command(
     chal_commands,
     bot,
     forum_channel_id=FORUM_CHANNEL_ID,

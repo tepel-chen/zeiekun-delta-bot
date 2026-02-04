@@ -27,3 +27,9 @@ async def sync_repository(repo_url: str, repo_path: Path) -> str:
 
     await run_git_command(["git", "clone", repo_url, str(repo_path)])
     return f"Cloned `{repo_url}` into `{repo_path.name}`."
+
+
+async def stage_commit_push(repo_path: Path, files: List[str], message: str) -> None:
+    await run_git_command(["git", "-C", str(repo_path), "add", *files])
+    await run_git_command(["git", "-C", str(repo_path), "commit", "-m", message])
+    await run_git_command(["git", "-C", str(repo_path), "push", "origin", "main"])

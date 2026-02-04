@@ -10,7 +10,8 @@ import yaml
 class Challenge:
     key: str
     category: str
-    name: str
+    folder_name: str
+    display_name: str
     description: str | None
     difficulty: str | None
     status: str | None
@@ -77,7 +78,8 @@ class Challenge:
                 Challenge(
                     key=key,
                     category=category,
-                    name=name,
+                    folder_name=name,
+                    display_name=metadata.get("name", name),
                     description=description,
                     difficulty=difficulty,
                     status=status,

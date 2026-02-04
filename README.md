@@ -24,7 +24,7 @@ Start the bot with:
 python src/main.py
 ```
 
-After it logs in you can run `/chal hello` to receive `Hello {username}` and `/chal pullrepo` to sync the configured GitHub repo into `challenge_repo` and to populate a forum thread per challenge.
+After it logs in you can run `/chal hello` to receive `Hello {username}`, `/chal pullrepo` to sync the configured GitHub repo into `challenge_repo` and populate forum threads per challenge, and `/chal set` (run inside a thread) to edit status/wave/difficulty/display name for that challenge; the command also updates the thread embed/tags and pushes the metadata change back to `main`.
 
 ## Pulling a GitHub Repository via the Bot
 
