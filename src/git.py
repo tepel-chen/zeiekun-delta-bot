@@ -23,10 +23,10 @@ async def sync_repository(repo_url: str, repo_path: Path) -> str:
     git_dir = repo_path / ".git"
     if git_dir.is_dir():
         await run_git_command(["git", "-C", str(repo_path), "pull"])
-        return f"Pulled latest changes into `{repo_path.name}`."
+        return f"`{repo_path.name}` の最新状態を取得しました。"
 
     await run_git_command(["git", "clone", repo_url, str(repo_path)])
-    return f"Cloned `{repo_url}` into `{repo_path.name}`."
+    return f"`{repo_url}` を `{repo_path.name}` にクローンしました。"
 
 
 async def stage_commit_push(repo_path: Path, files: List[str], message: str) -> None:

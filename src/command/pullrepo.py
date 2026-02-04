@@ -31,7 +31,7 @@ def register_pullrepo_command(
         try:
             action = await sync_repository(repo_url, challenge_repo_path)
         except RuntimeError as exc:
-            await interaction.followup.send(f"Failed to sync repository: {exc}", ephemeral=True)
+            await interaction.followup.send(f"リポジトリの同期に失敗しました: {exc}", ephemeral=True)
             return
 
         try:
@@ -51,10 +51,10 @@ def register_pullrepo_command(
 
         message_lines = [action]
         if new_threads:
-            message_lines.append(f"Created threads for: {', '.join(new_threads)}.")
+            message_lines.append(f"新しいスレッドを作成しました: {', '.join(new_threads)}。")
         if updated_threads:
-            message_lines.append(f"Updated threads for: {', '.join(updated_threads)}.")
+            message_lines.append(f"既存スレッドを更新しました: {', '.join(updated_threads)}。")
         if not new_threads and not updated_threads:
-            message_lines.append("All challenge threads already existed and were current.")
+            message_lines.append("すべてのチャレンジスレッドはすでに最新です。")
 
         await interaction.followup.send("\n".join(message_lines))

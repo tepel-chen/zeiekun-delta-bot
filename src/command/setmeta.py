@@ -29,13 +29,13 @@ def register_set_command(
     repo_base = calculate_repo_base(repo_url)
 
     @group.command(
-        name="set", description="Update the metadata for the challenge tied to this thread"
+        name="set", description="このスレッドに紐づくチャレンジのメタ情報を更新"
     )
     @app_commands.describe(
-        status="New status value",
-        wave="New wave tag",
-        difficulty="New difficulty",
-        name="Optional display name override",
+        status="新しいステータス",
+        wave="新しいウェーブ",
+        difficulty="新しい難易度",
+        name="表示名の上書き",
     )
     async def set_metadata(
         interaction: Interaction,
@@ -51,13 +51,13 @@ def register_set_command(
             await sync_repository(repo_url, challenge_repo_path)
         except RuntimeError as exc:
             await interaction.followup.send(
-                f"Failed to sync repository before editing: {exc}", ephemeral=True
+                f"編集前のリポジトリ同期に失敗しました: {exc}", ephemeral=True
             )
             return
 
         if not isinstance(interaction.channel, discord.Thread):
             await interaction.followup.send(
-                "This command must be run inside the challenge's forum thread.", ephemeral=True
+                "このコマンドはチャレンジのフォーラムスレッド内で実行してください。", ephemeral=True
             )
             return
 
@@ -68,7 +68,7 @@ def register_set_command(
         )
         if not challenge_key:
             await interaction.followup.send(
-                "No challenge is associated with this thread.", ephemeral=True
+                "このスレッドに対応するチャレンジがキャッシュにありません。", ephemeral=True
             )
             return
 
@@ -76,7 +76,7 @@ def register_set_command(
         target = next((c for c in challenges if c.key == challenge_key), None)
         if not target:
             await interaction.followup.send(
-                f"Challenge `{challenge_key}` not found after syncing.", ephemeral=True
+                f"チャレンジ `{challenge_key}` が同期後に見つかりませんでした。", ephemeral=True
             )
             return
 
@@ -85,7 +85,7 @@ def register_set_command(
             metadata = yaml.safe_load(challenge_file.read_text()) or {}
         except yaml.YAMLError as exc:
             await interaction.followup.send(
-                f"Failed to parse {challenge_file}: {exc}", ephemeral=True
+                f"{challenge_file} の解析に失敗しました: {exc}", ephemeral=True
             )
             return
 
@@ -105,7 +105,7 @@ def register_set_command(
 
         if not changed_fields:
             await interaction.followup.send(
-                "No fields were provided to update.", ephemeral=True
+                "更新対象のフィールドが指定されていません。", ephemeral=True
             )
             return
 
@@ -120,7 +120,7 @@ def register_set_command(
             )
         except RuntimeError as exc:
             await interaction.followup.send(
-                f"Failed to commit and push changes: {exc}", ephemeral=True
+                f"コミット／プッシュに失敗しました: {exc}", ephemeral=True
             )
             return
 
@@ -128,7 +128,7 @@ def register_set_command(
         updated = next((c for c in updated_challenges if c.key == challenge_key), None)
         if not updated:
             await interaction.followup.send(
-                f"Challenge `{challenge_key}` disappeared after editing.", ephemeral=True
+                f"編集後にチャレンジ `{challenge_key}` が見つかりませんでした。", ephemeral=True
             )
             return
 
@@ -139,10 +139,10 @@ def register_set_command(
             )
         except RuntimeError as exc:
             await interaction.followup.send(
-                f"Thread update failed: {exc}", ephemeral=True
+                f"スレッド更新に失敗しました: {exc}", ephemeral=True
             )
             return
 
         await interaction.followup.send(
-            f"Updated `{challenge_key}` fields: {', '.join(changed_fields)}."
+            f"チャレンジ `{challenge_key}` の {', '.join(changed_fields)} を更新しました。"
         )
