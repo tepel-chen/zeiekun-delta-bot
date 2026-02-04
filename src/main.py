@@ -34,6 +34,7 @@ DISCORD_TOKEN = require_env_variable("DISCORD_TOKEN")
 GUILD_ID = require_env_int("GUILD_ID")
 FORUM_CHANNEL_ID = require_env_int("FORUM_CHANNEL_ID")
 GITHUB_REPO_URL = require_env_variable("GITHUB_REPO_URL")
+CATEGORY_ID = require_env_int("CATEGORY_ID")
 
 BASE_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -50,6 +51,10 @@ guild_obj = discord.Object(id=GUILD_ID)
 chal_commands = app_commands.Group(name="chal", description="チャレンジ制作関連")
 tree.add_command(chal_commands, guild=guild_obj)
 
+register_hello_command(
+    chal_commands,
+    category_id=CATEGORY_ID,
+)
 register_pull_command(
     chal_commands,
     bot,
@@ -57,6 +62,7 @@ register_pull_command(
     challenge_repo_path=CHALLENGE_REPO_PATH,
     thread_state_file=THREAD_STATE_FILE,
     repo_url=GITHUB_REPO_URL,
+    category_id=CATEGORY_ID,
 )
 register_set_command(
     chal_commands,
@@ -65,21 +71,25 @@ register_set_command(
     challenge_repo_path=CHALLENGE_REPO_PATH,
     thread_state_file=THREAD_STATE_FILE,
     repo_url=GITHUB_REPO_URL,
+    category_id=CATEGORY_ID,
 )
 register_info_status_command(
     chal_commands,
     challenge_repo_path=CHALLENGE_REPO_PATH,
     thread_state_file=THREAD_STATE_FILE,
+    category_id=CATEGORY_ID,
 )
 register_info_category_command(
     chal_commands,
     challenge_repo_path=CHALLENGE_REPO_PATH,
     thread_state_file=THREAD_STATE_FILE,
+    category_id=CATEGORY_ID,
 )
 register_info_waves_command(
     chal_commands,
     challenge_repo_path=CHALLENGE_REPO_PATH,
     thread_state_file=THREAD_STATE_FILE,
+    category_id=CATEGORY_ID,
 )
 
 

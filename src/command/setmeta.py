@@ -8,6 +8,7 @@ import yaml
 from discord import Interaction, app_commands
 
 from challenge import Challenge
+from command.utils import ensure_in_category
 from forum_sync import (
     calculate_repo_base,
     ensure_challenge_threads,
@@ -24,6 +25,7 @@ def register_set_command(
     challenge_repo_path: Path,
     thread_state_file: Path,
     repo_url: str,
+    category_id: int,
 ) -> None:
     challenge_root = challenge_repo_path / "challenges"
     repo_base = calculate_repo_base(repo_url)
@@ -45,6 +47,8 @@ def register_set_command(
         name: str | None = None,
     ) -> None:
         """Edit challenge metadata, push changes, and update the forum thread."""
+        if not await ensure_in_category(interaction, category_id):
+            return
         await interaction.response.defer(thinking=True)
 
         try:

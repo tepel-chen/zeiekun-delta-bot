@@ -1,15 +1,13 @@
 from __future__ import annotations
-
 from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Optional
-
 import discord
 from discord import Interaction, app_commands
-
 from challenge import Challenge
 from forum_sync import load_thread_state
 from info_helpers import format_challenge_line, sort_by_status_difficulty
+from command.utils import ensure_in_category
 
 
 def wave_key(value: Optional[str]) -> int:
@@ -38,16 +36,19 @@ def register_info_waves_command(
     group: app_commands.Group,
     challenge_repo_path: Path,
     thread_state_file: Path,
+    category_id: int,
 ) -> None:
     challenge_root = challenge_repo_path / "challenges"
 
     @group.command(name="info_waves", description="Wave別チャレンジ一覧")
     async def info_waves(interaction: Interaction) -> None:
+        if not await ensure_in_category(interaction, category_id):
+            return
         await interaction.response.defer(thinking=True)
         challenges = Challenge.collect_from_repo(challenge_root, challenge_repo_path)
         if not challenges:
             await interaction.followup.send(
-                "チャレンジが見つかりませんでした。`/chal pullrepo`を実行してください。",
+                "チャレンジが見つかりませんでした。`/chal pull`を実行してください。",
                 ephemeral=True,
             )
             return
