@@ -46,7 +46,7 @@ def save_thread_state(state_file: Path, state: Dict[str, Dict[str, int]]) -> Non
 
 def format_thread_name(challenge: Challenge) -> str:
     display = challenge.display_name or challenge.folder_name
-    return f"[{challenge.category}] {display}"
+    return f"[{challenge.category}/{challenge.difficulty}] {display}"
 
 
 def build_challenge_embed(challenge: Challenge, repo_base: str) -> discord.Embed:
