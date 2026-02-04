@@ -47,6 +47,12 @@ guild_obj = discord.Object(id=GUILD_ID)
 chal_commands = app_commands.Group(name="chal", description="チャレンジ制作関連")
 tree.add_command(chal_commands, guild=guild_obj)
 
+state_display = {
+    "idea": "アイデア",
+    "playtest": "プレイテスト",
+    "done": "完成",
+    "scrapped": "没"
+}
 
 def load_thread_state() -> Dict[str, Dict[str, int]]:
     if not THREAD_STATE_FILE.exists():
@@ -178,7 +184,7 @@ def build_challenge_embed(challenge: Dict[str, Any]) -> discord.Embed:
     if challenge.get("difficulty"):
         embed.add_field(name="Difficulty", value=challenge["difficulty"], inline=True)
     if challenge.get("status"):
-        embed.add_field(name="Status", value=challenge["status"], inline=True)
+        embed.add_field(name="Status", value=state_display.get(challenge["status"], "不明"), inline=True)
     if challenge.get("wave"):
         embed.add_field(name="Wave", value=challenge["wave"], inline=True)
     if challenge.get("authors"):
@@ -186,6 +192,22 @@ def build_challenge_embed(challenge: Dict[str, Any]) -> discord.Embed:
     if challenge.get("tags"):
         embed.add_field(name="Tags", value=", ".join(challenge["tags"]), inline=False)
     return embed
+
+async def assure_tag(tag_name: str, forum: discord.ForumChannel) -> discord.ForumTag:
+    for tag in forum.available_tags:
+        if tag.name == tag_name:
+            return tag
+    
+    return await forum.create_tag(name=tag_name)
+
+async def build_challenge_tags(challenge: Dict[str, Any], forum: discord.ForumChannel) -> List[discord.ForumTag]:
+    res = []
+    res.append(await assure_tag(challenge["category"], forum))
+    status_display = state_display.get(challenge["status"])
+    if status_display:
+        res.append(await assure_tag(status_display, forum))
+    return res
+
 
 async def run_git_command(cmd: List[str], cwd: str | None = None) -> bytes:
     process = await asyncio.create_subprocess_exec(
@@ -223,7 +245,7 @@ async def ensure_challenge_threads(
     state_dirty = False
 
     for challenge in challenges:
-        state_key = f"{challenge['category']}/{challenge['key']}"
+        state_key = challenge['key']
         record = state.get(state_key, {})
         thread_id = record.get("thread_id")
         message_id = record.get("message_id")
@@ -234,9 +256,11 @@ async def ensure_challenge_threads(
         if thread is None:
             thread_name = format_thread_name(challenge)
             embed = build_challenge_embed(challenge)
+            tags = await build_challenge_tags(challenge, forum_channel)
             thread, message = await forum_channel.create_thread(
                 name=thread_name, embed=embed
             )
+            await thread.add_tags(*tags)
             state[state_key] = {
                 "thread_id": thread.id,
                 "message_id": message.id,
@@ -250,6 +274,10 @@ async def ensure_challenge_threads(
             message_target_id = message_id or thread.id
             message = await thread.fetch_message(message_target_id)
             await message.edit(embed=build_challenge_embed(challenge))
+
+            tags = await build_challenge_tags(challenge, forum_channel)
+            await thread.add_tags(*tags)
+
             record["message_id"] = message.id
             record["hash"] = current_hash
             state[state_key] = record
