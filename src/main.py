@@ -9,6 +9,8 @@ from command.hello import register_hello_command
 from command.pullrepo import register_pullrepo_command
 from command.setmeta import register_set_command
 from command.info_status import register_info_status_command
+from command.info_category import register_info_category_command
+from command.info_waves import register_info_waves_command
 
 
 def require_env_variable(name: str) -> str:
@@ -66,6 +68,16 @@ register_set_command(
     repo_url=GITHUB_REPO_URL,
 )
 register_info_status_command(
+    chal_commands,
+    challenge_repo_path=CHALLENGE_REPO_PATH,
+    thread_state_file=THREAD_STATE_FILE,
+)
+register_info_category_command(
+    chal_commands,
+    challenge_repo_path=CHALLENGE_REPO_PATH,
+    thread_state_file=THREAD_STATE_FILE,
+)
+register_info_waves_command(
     chal_commands,
     challenge_repo_path=CHALLENGE_REPO_PATH,
     thread_state_file=THREAD_STATE_FILE,
