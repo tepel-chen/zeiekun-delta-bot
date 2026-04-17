@@ -16,7 +16,6 @@ def register_pull_command(
     bot: discord.Client,
     forum_channel_id: int,
     challenge_repo_path: Path,
-    thread_state_file: Path,
     repo_url: str,
     category_id: int,
 ) -> None:
@@ -44,7 +43,6 @@ def register_pull_command(
             new_threads, updated_threads = await ensure_challenge_threads(
                 forum_channel,
                 challenges,
-                thread_state_file,
                 repo_base,
             )
         except RuntimeError as exc:

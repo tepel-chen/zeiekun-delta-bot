@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import json
 import urllib.parse
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 import discord
 from challenge import Challenge
+from state_store import load_thread_state, upsert_thread_state
 
 
 state_display = {
@@ -21,27 +21,6 @@ status_color = {
     "playtest": 0x3774e6,
     "done": 0x14f532,
 }
-
-
-def load_thread_state(state_file: Path) -> Dict[str, Dict[str, int]]:
-    if not state_file.exists():
-        return {}
-    try:
-        data = json.loads(state_file.read_text())
-    except (json.JSONDecodeError, ValueError):
-        return {}
-
-    state: Dict[str, Dict[str, int]] = {}
-    for key, value in data.items():
-        if not isinstance(value, dict):
-            continue
-        state[str(key)] = value
-
-    return state
-
-
-def save_thread_state(state_file: Path, state: Dict[str, Dict[str, int]]) -> None:
-    state_file.write_text(json.dumps(state, indent=2))
 
 
 def format_thread_name(challenge: Challenge) -> str:
@@ -116,13 +95,11 @@ async def get_forum_channel(bot: discord.Client, forum_channel_id: int) -> disco
 async def ensure_challenge_threads(
     forum_channel: discord.ForumChannel,
     challenges: List[Challenge],
-    state_file: Path,
     repo_base: str,
 ) -> Tuple[List[str], List[str]]:
-    state = load_thread_state(state_file)
+    state = load_thread_state()
     created: List[str] = []
     updated: List[str] = []
-    state_dirty = False
 
     for challenge in challenges:
         state_key = challenge.key
@@ -146,8 +123,8 @@ async def ensure_challenge_threads(
                 "hash": current_hash,
                 "tag_ids": [tag.id for tag in tags],
             }
+            upsert_thread_state(state_key, state[state_key])
             created.append(state_key)
-            state_dirty = True
             continue
 
         if current_hash is not None and current_hash != cached_hash:
@@ -160,16 +137,14 @@ async def ensure_challenge_threads(
             record["hash"] = current_hash
             record["tag_ids"] = [tag.id for tag in tags]
             state[state_key] = record
+            upsert_thread_state(state_key, record)
             updated.append(state_key)
-            state_dirty = True
         else:
             record.setdefault("thread_id", thread.id)
             if message_id:
                 record.setdefault("message_id", message_id)
             record.setdefault("tag_ids", [tag.id for tag in tags])
             state[state_key] = record
-
-    if state_dirty:
-        save_thread_state(state_file, state)
+            upsert_thread_state(state_key, record)
 
     return created, updated

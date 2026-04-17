@@ -1,22 +1,21 @@
 from __future__ import annotations
 from pathlib import Path
-from typing import Dict, List, Optional
 import discord
 from discord import Interaction, app_commands
 from challenge import Challenge
-from forum_sync import load_thread_state, state_display
+from forum_sync import state_display
 from info_helpers import (
     format_challenge_line,
     group_challenges_by_status,
     status_ordered_statuses,
 )
 from command.utils import ensure_in_category
+from state_store import load_thread_state
 
 
 def register_info_status_command(
     group: app_commands.Group,
     challenge_repo_path: Path,
-    thread_state_file: Path,
     category_id: int,
 ) -> None:
     challenge_root = challenge_repo_path / "challenges"
@@ -35,7 +34,7 @@ def register_info_status_command(
             return
         groups = group_challenges_by_status(challenges)
         ordered_statuses = status_ordered_statuses(groups)
-        thread_state = load_thread_state(thread_state_file)
+        thread_state = load_thread_state()
 
         embed = discord.Embed(
             title="/chal info_status",

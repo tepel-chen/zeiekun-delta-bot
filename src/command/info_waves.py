@@ -5,9 +5,9 @@ from typing import Dict, List, Optional
 import discord
 from discord import Interaction, app_commands
 from challenge import Challenge
-from forum_sync import load_thread_state
 from info_helpers import format_challenge_line, sort_by_status_difficulty
 from command.utils import ensure_in_category
+from state_store import load_thread_state
 
 
 def wave_key(value: Optional[str]) -> int:
@@ -35,7 +35,6 @@ def group_by_wave(challenges: List[Challenge]) -> Dict[str, List[Challenge]]:
 def register_info_waves_command(
     group: app_commands.Group,
     challenge_repo_path: Path,
-    thread_state_file: Path,
     category_id: int,
 ) -> None:
     challenge_root = challenge_repo_path / "challenges"
@@ -53,7 +52,7 @@ def register_info_waves_command(
             )
             return
         groups = group_by_wave(challenges)
-        thread_state = load_thread_state(thread_state_file)
+        thread_state = load_thread_state()
 
         embed = discord.Embed(
             title="/chal info_waves",

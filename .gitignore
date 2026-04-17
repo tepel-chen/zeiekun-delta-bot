@@ -1,5 +1,5 @@
 __pycache__/
 .env
-challenge_threads.json
+state.sqlite3
 challenge_repo/
 venv

@@ -13,9 +13,9 @@ from forum_sync import (
     calculate_repo_base,
     ensure_challenge_threads,
     get_forum_channel,
-    load_thread_state,
 )
 from git import stage_commit_push, sync_repository
+from state_store import get_thread_state_by_thread_id
 
 
 def register_set_command(
@@ -23,7 +23,6 @@ def register_set_command(
     bot: "discord.Client",
     forum_channel_id: int,
     challenge_repo_path: Path,
-    thread_state_file: Path,
     repo_url: str,
     category_id: int,
 ) -> None:
@@ -65,16 +64,13 @@ def register_set_command(
             )
             return
 
-        state = load_thread_state(thread_state_file)
-        challenge_key = next(
-            (key for key, record in state.items() if record.get("thread_id") == interaction.channel.id),
-            None,
-        )
-        if not challenge_key:
+        record = get_thread_state_by_thread_id(interaction.channel.id)
+        if not record:
             await interaction.followup.send(
                 "このスレッドに対応するチャレンジがキャッシュにありません。", ephemeral=True
             )
             return
+        challenge_key, _ = record
 
         challenges = Challenge.collect_from_repo(challenge_root, challenge_repo_path)
         target = next((c for c in challenges if c.key == challenge_key), None)
@@ -139,7 +135,7 @@ def register_set_command(
         try:
             forum_channel = await get_forum_channel(bot, forum_channel_id)
             await ensure_challenge_threads(
-                forum_channel, [updated], thread_state_file, repo_base
+                forum_channel, [updated], repo_base
             )
         except RuntimeError as exc:
             await interaction.followup.send(
