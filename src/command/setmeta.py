@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import List
 
 import discord
@@ -9,6 +8,7 @@ from discord import Interaction, app_commands
 
 from challenge import Challenge
 from command.utils import ensure_in_category
+from config import CHALLENGE_REPO_PATH, FORUM_CHANNEL_ID, GITHUB_REPO_URL
 from forum_sync import (
     calculate_repo_base,
     ensure_challenge_threads,
@@ -21,13 +21,9 @@ from state_store import get_thread_state_by_thread_id
 def register_set_command(
     group: app_commands.Group,
     bot: "discord.Client",
-    forum_channel_id: int,
-    challenge_repo_path: Path,
-    repo_url: str,
-    category_id: int,
 ) -> None:
-    challenge_root = challenge_repo_path / "challenges"
-    repo_base = calculate_repo_base(repo_url)
+    challenge_root = CHALLENGE_REPO_PATH / "challenges"
+    repo_base = calculate_repo_base(GITHUB_REPO_URL)
 
     @group.command(
         name="set", description="このスレッドに紐づくチャレンジのメタ情報を更新"
@@ -46,12 +42,12 @@ def register_set_command(
         name: str | None = None,
     ) -> None:
         """Edit challenge metadata, push changes, and update the forum thread."""
-        if not await ensure_in_category(interaction, category_id):
+        if not await ensure_in_category(interaction):
             return
         await interaction.response.defer(thinking=True)
 
         try:
-            await sync_repository(repo_url, challenge_repo_path)
+            await sync_repository(GITHUB_REPO_URL, CHALLENGE_REPO_PATH)
         except RuntimeError as exc:
             await interaction.followup.send(
                 f"編集前のリポジトリ同期に失敗しました: {exc}", ephemeral=True
@@ -72,7 +68,7 @@ def register_set_command(
             return
         challenge_key, _ = record
 
-        challenges = Challenge.collect_from_repo(challenge_root, challenge_repo_path)
+        challenges = Challenge.collect_from_repo(challenge_root, CHALLENGE_REPO_PATH)
         target = next((c for c in challenges if c.key == challenge_key), None)
         if not target:
             await interaction.followup.send(
@@ -80,7 +76,7 @@ def register_set_command(
             )
             return
 
-        challenge_file = challenge_repo_path / target.challenge_path / "challenge.yml"
+        challenge_file = CHALLENGE_REPO_PATH / target.challenge_path / "challenge.yml"
         try:
             metadata = yaml.safe_load(challenge_file.read_text()) or {}
         except yaml.YAMLError as exc:
@@ -111,10 +107,10 @@ def register_set_command(
 
         challenge_file.write_text(yaml.safe_dump(metadata, sort_keys=False))
 
-        relative_path = Path(target.challenge_path) / "challenge.yml"
+        relative_path = CHALLENGE_REPO_PATH.joinpath(target.challenge_path, "challenge.yml").relative_to(CHALLENGE_REPO_PATH)
         try:
             await stage_commit_push(
-                challenge_repo_path,
+                CHALLENGE_REPO_PATH,
                 [str(relative_path)],
                 f"Update metadata for {challenge_key}",
             )
@@ -124,7 +120,7 @@ def register_set_command(
             )
             return
 
-        updated_challenges = Challenge.collect_from_repo(challenge_root, challenge_repo_path)
+        updated_challenges = Challenge.collect_from_repo(challenge_root, CHALLENGE_REPO_PATH)
         updated = next((c for c in updated_challenges if c.key == challenge_key), None)
         if not updated:
             await interaction.followup.send(
@@ -133,7 +129,7 @@ def register_set_command(
             return
 
         try:
-            forum_channel = await get_forum_channel(bot, forum_channel_id)
+            forum_channel = await get_forum_channel(bot, FORUM_CHANNEL_ID)
             await ensure_challenge_threads(
                 forum_channel, [updated], repo_base
             )

@@ -1,9 +1,5 @@
-import os
-from pathlib import Path
-
 import discord
 from discord import app_commands
-from dotenv import load_dotenv
 
 from command.hello import register_hello_command
 from command.pull import register_pull_command
@@ -11,35 +7,8 @@ from command.setmeta import register_set_command
 from command.info_status import register_info_status_command
 from command.info_category import register_info_category_command
 from command.info_waves import register_info_waves_command
+from config import DISCORD_TOKEN, GUILD_ID
 from state_store import initialize_state_db
-
-
-def require_env_variable(name: str) -> str:
-    value = os.getenv(name)
-    if not value:
-        raise SystemExit(f"{name} is not set in .env")
-    return value
-
-
-def require_env_int(name: str) -> int:
-    value = require_env_variable(name)
-    try:
-        return int(value)
-    except ValueError as exc:
-        raise SystemExit(f"{name} must be an integer") from exc
-
-
-load_dotenv(".env")
-
-DISCORD_TOKEN = require_env_variable("DISCORD_TOKEN")
-GUILD_ID = require_env_int("GUILD_ID")
-FORUM_CHANNEL_ID = require_env_int("FORUM_CHANNEL_ID")
-GITHUB_REPO_URL = require_env_variable("GITHUB_REPO_URL")
-CATEGORY_ID = require_env_int("CATEGORY_ID")
-
-BASE_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = BASE_DIR.parent
-CHALLENGE_REPO_PATH = PROJECT_ROOT / "challenge_repo"
 
 initialize_state_db()
 
@@ -53,40 +22,23 @@ guild_obj = discord.Object(id=GUILD_ID)
 chal_commands = app_commands.Group(name="chal", description="チャレンジ制作関連")
 tree.add_command(chal_commands, guild=guild_obj)
 
-register_hello_command(
-    chal_commands,
-    category_id=CATEGORY_ID,
-)
+register_hello_command(chal_commands)
 register_pull_command(
     chal_commands,
     bot,
-    forum_channel_id=FORUM_CHANNEL_ID,
-    challenge_repo_path=CHALLENGE_REPO_PATH,
-    repo_url=GITHUB_REPO_URL,
-    category_id=CATEGORY_ID,
 )
 register_set_command(
     chal_commands,
     bot,
-    forum_channel_id=FORUM_CHANNEL_ID,
-    challenge_repo_path=CHALLENGE_REPO_PATH,
-    repo_url=GITHUB_REPO_URL,
-    category_id=CATEGORY_ID,
 )
 register_info_status_command(
     chal_commands,
-    challenge_repo_path=CHALLENGE_REPO_PATH,
-    category_id=CATEGORY_ID,
 )
 register_info_category_command(
     chal_commands,
-    challenge_repo_path=CHALLENGE_REPO_PATH,
-    category_id=CATEGORY_ID,
 )
 register_info_waves_command(
     chal_commands,
-    challenge_repo_path=CHALLENGE_REPO_PATH,
-    category_id=CATEGORY_ID,
 )
 
 

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import discord
+from config import CATEGORY_ID
 
 
-async def ensure_in_category(interaction: discord.Interaction, category_id: int) -> bool:
+async def ensure_in_category(interaction: discord.Interaction) -> bool:
     channel = interaction.channel
     actual_category = None
     if isinstance(channel, discord.Thread):
@@ -13,7 +14,7 @@ async def ensure_in_category(interaction: discord.Interaction, category_id: int)
     else:
         actual_category = getattr(channel, "category_id", None)
 
-    if actual_category != category_id:
+    if actual_category != CATEGORY_ID:
         await interaction.response.send_message(
             "このコマンドは指定されたカテゴリ内でのみ利用可能です。", ephemeral=True
         )

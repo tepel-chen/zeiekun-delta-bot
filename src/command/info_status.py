@@ -1,5 +1,4 @@
 from __future__ import annotations
-from pathlib import Path
 import discord
 from discord import Interaction, app_commands
 from challenge import Challenge
@@ -10,22 +9,21 @@ from info_helpers import (
     status_ordered_statuses,
 )
 from command.utils import ensure_in_category
+from config import CHALLENGE_REPO_PATH
 from state_store import load_thread_state
 
 
 def register_info_status_command(
     group: app_commands.Group,
-    challenge_repo_path: Path,
-    category_id: int,
 ) -> None:
-    challenge_root = challenge_repo_path / "challenges"
+    challenge_root = CHALLENGE_REPO_PATH / "challenges"
 
     @group.command(name="info_status", description="ステータス別チャレンジ一覧")
     async def info_status(interaction: Interaction) -> None:
-        if not await ensure_in_category(interaction, category_id):
+        if not await ensure_in_category(interaction):
             return
         await interaction.response.defer(thinking=True)
-        challenges = Challenge.collect_from_repo(challenge_root, challenge_repo_path)
+        challenges = Challenge.collect_from_repo(challenge_root, CHALLENGE_REPO_PATH)
         if not challenges:
             await interaction.followup.send(
                 "チャレンジが見つかりませんでした。`/chal pull`を実行してください。",
