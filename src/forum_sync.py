@@ -77,6 +77,13 @@ async def build_challenge_tags(
     return res
 
 
+def resolve_forum_tags_by_ids(
+    forum: discord.ForumChannel, tag_ids: List[int]
+) -> List[discord.ForumTag]:
+    tags_by_id = {tag.id: tag for tag in forum.available_tags}
+    return [tags_by_id[tag_id] for tag_id in tag_ids if tag_id in tags_by_id]
+
+
 def calculate_repo_base(repo_url: str) -> str:
     base = repo_url[:-4] if repo_url.endswith(".git") else repo_url
     return base.rstrip("/")
@@ -133,11 +140,23 @@ async def ensure_challenge_threads(
             message_target_id = message_id or thread.id
             message = await thread.fetch_message(message_target_id)
             await message.edit(embed=build_challenge_embed(challenge, repo_base))
-            if tags:
-                await thread.add_tags(*tags)
+            previous_tag_ids = record.get("tag_ids", [])
+            if not isinstance(previous_tag_ids, list):
+                previous_tag_ids = []
+            previous_tags = resolve_forum_tags_by_ids(
+                forum_channel,
+                [tag_id for tag_id in previous_tag_ids if isinstance(tag_id, int)],
+            )
+            next_tag_ids = [tag.id for tag in tags]
+            tags_to_remove = [tag for tag in previous_tags if tag.id not in next_tag_ids]
+            tags_to_add = [tag for tag in tags if tag.id not in previous_tag_ids]
+            if tags_to_remove:
+                await thread.remove_tags(*tags_to_remove)
+            if tags_to_add:
+                await thread.add_tags(*tags_to_add)
             record["message_id"] = message.id
             record["hash"] = current_hash
-            record["tag_ids"] = [tag.id for tag in tags]
+            record["tag_ids"] = next_tag_ids
             state[state_key] = record
             upsert_thread_state(challenge.branch_name, state_key, record)
             updated.append(state_key)
