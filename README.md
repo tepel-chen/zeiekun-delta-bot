@@ -11,7 +11,7 @@
    cp .env.example .env
    ```
    `DISCORD_TOKEN`、`GUILD_ID`、`FORUM_CHANNEL_ID`、`GITHUB_REPO_URL` など、Bot と対象フォーラム／リポジトリ用の環境変数を設定してください。
-   スレッド状態は `state.sqlite3` に保存されます。
+   スレッド状態は `branch_state.sqlite3` に保存され、ブランチごとの checkout は `challenge_repos/` 以下に作られます。
 3. Discord デベロッパーポータルでアプリケーションを作成し、**bot** スコープで以下を有効化してください。
 * Manage Channels
 * Send Messages

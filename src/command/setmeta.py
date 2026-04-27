@@ -8,13 +8,13 @@ from discord import Interaction, app_commands
 
 from challenge import Challenge
 from command.utils import ensure_in_category
-from config import CHALLENGE_REPO_PATH, FORUM_CHANNEL_ID, GITHUB_REPO_URL
+from config import FORUM_CHANNEL_ID, GITHUB_REPO_URL, get_challenge_repo_path
 from forum_sync import (
     calculate_repo_base,
     ensure_challenge_threads,
     get_forum_channel,
 )
-from git import stage_commit_push, sync_repository
+from git import stage_commit_push, sync_repository_branch
 from state_store import get_thread_state_by_thread_id
 
 
@@ -22,7 +22,6 @@ def register_set_command(
     group: app_commands.Group,
     bot: "discord.Client",
 ) -> None:
-    challenge_root = CHALLENGE_REPO_PATH / "challenges"
     repo_base = calculate_repo_base(GITHUB_REPO_URL)
 
     @group.command(
@@ -46,14 +45,6 @@ def register_set_command(
             return
         await interaction.response.defer(thinking=True)
 
-        try:
-            await sync_repository(GITHUB_REPO_URL, CHALLENGE_REPO_PATH)
-        except RuntimeError as exc:
-            await interaction.followup.send(
-                f"編集前のリポジトリ同期に失敗しました: {exc}", ephemeral=True
-            )
-            return
-
         if not isinstance(interaction.channel, discord.Thread):
             await interaction.followup.send(
                 "このコマンドはチャレンジのフォーラムスレッド内で実行してください。", ephemeral=True
@@ -66,9 +57,19 @@ def register_set_command(
                 "このスレッドに対応するチャレンジがキャッシュにありません。", ephemeral=True
             )
             return
-        challenge_key, _ = record
+        branch_name, challenge_key, _ = record
+        repo_path = get_challenge_repo_path(branch_name)
+        challenge_root = repo_path / "challenges"
 
-        challenges = Challenge.collect_from_repo(challenge_root, CHALLENGE_REPO_PATH)
+        try:
+            await sync_repository_branch(GITHUB_REPO_URL, repo_path, branch_name)
+        except RuntimeError as exc:
+            await interaction.followup.send(
+                f"編集前のリポジトリ同期に失敗しました: {exc}", ephemeral=True
+            )
+            return
+
+        challenges = Challenge.collect_from_repo(challenge_root, repo_path, branch_name)
         target = next((c for c in challenges if c.key == challenge_key), None)
         if not target:
             await interaction.followup.send(
@@ -76,7 +77,7 @@ def register_set_command(
             )
             return
 
-        challenge_file = CHALLENGE_REPO_PATH / target.challenge_path / "challenge.yml"
+        challenge_file = repo_path / target.challenge_path / "challenge.yml"
         try:
             metadata = yaml.safe_load(challenge_file.read_text()) or {}
         except yaml.YAMLError as exc:
@@ -107,12 +108,15 @@ def register_set_command(
 
         challenge_file.write_text(yaml.safe_dump(metadata, sort_keys=False))
 
-        relative_path = CHALLENGE_REPO_PATH.joinpath(target.challenge_path, "challenge.yml").relative_to(CHALLENGE_REPO_PATH)
+        relative_path = repo_path.joinpath(target.challenge_path, "challenge.yml").relative_to(
+            repo_path
+        )
         try:
             await stage_commit_push(
-                CHALLENGE_REPO_PATH,
+                repo_path,
                 [str(relative_path)],
                 f"Update metadata for {challenge_key}",
+                branch_name,
             )
         except RuntimeError as exc:
             await interaction.followup.send(
@@ -120,7 +124,9 @@ def register_set_command(
             )
             return
 
-        updated_challenges = Challenge.collect_from_repo(challenge_root, CHALLENGE_REPO_PATH)
+        updated_challenges = Challenge.collect_from_repo(
+            challenge_root, repo_path, branch_name
+        )
         updated = next((c for c in updated_challenges if c.key == challenge_key), None)
         if not updated:
             await interaction.followup.send(

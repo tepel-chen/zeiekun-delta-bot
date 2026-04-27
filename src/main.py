@@ -7,6 +7,7 @@ from command.setmeta import register_set_command
 from command.info_status import register_info_status_command
 from command.info_category import register_info_category_command
 from command.info_waves import register_info_waves_command
+from command.unfollow import register_unfollow_command
 from config import DISCORD_TOKEN, GUILD_ID
 from state_store import initialize_state_db
 
@@ -27,6 +28,7 @@ register_pull_command(
     chal_commands,
     bot,
 )
+register_unfollow_command(chal_commands)
 register_set_command(
     chal_commands,
     bot,

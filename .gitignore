@@ -1,5 +1,5 @@
 __pycache__/
 .env
-state.sqlite3
-challenge_repo/
+branch_state.sqlite3
+challenge_repos/
 venv

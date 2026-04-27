@@ -20,16 +20,53 @@ async def run_git_command(cmd: List[str], cwd: str | None = None) -> bytes:
 
 
 async def sync_repository(repo_url: str, repo_path: Path) -> str:
+    return await sync_repository_branch(repo_url, repo_path, "main")
+
+
+async def local_branch_exists(repo_path: Path, branch_name: str) -> bool:
+    try:
+        await run_git_command(
+            ["git", "-C", str(repo_path), "rev-parse", "--verify", branch_name]
+        )
+    except RuntimeError:
+        return False
+    return True
+
+
+async def sync_repository_branch(repo_url: str, repo_path: Path, branch_name: str) -> str:
     git_dir = repo_path / ".git"
     if git_dir.is_dir():
-        await run_git_command(["git", "-C", str(repo_path), "pull"])
-        return f"`{repo_path.name}` の最新状態を取得しました。"
+        await run_git_command(["git", "-C", str(repo_path), "fetch", "origin", branch_name])
+        if await local_branch_exists(repo_path, branch_name):
+            await run_git_command(["git", "-C", str(repo_path), "checkout", branch_name])
+        else:
+            await run_git_command(
+                [
+                    "git",
+                    "-C",
+                    str(repo_path),
+                    "checkout",
+                    "-b",
+                    branch_name,
+                    "--track",
+                    f"origin/{branch_name}",
+                ]
+            )
+        await run_git_command(
+            ["git", "-C", str(repo_path), "pull", "--ff-only", "origin", branch_name]
+        )
+        return f"`{branch_name}` ブランチの最新状態を取得しました。"
 
-    await run_git_command(["git", "clone", repo_url, str(repo_path)])
-    return f"`{repo_url}` を `{repo_path.name}` にクローンしました。"
+    repo_path.parent.mkdir(parents=True, exist_ok=True)
+    await run_git_command(
+        ["git", "clone", "--branch", branch_name, "--single-branch", repo_url, str(repo_path)]
+    )
+    return f"`{branch_name}` ブランチを `{repo_path.name}` にクローンしました。"
 
 
-async def stage_commit_push(repo_path: Path, files: List[str], message: str) -> None:
+async def stage_commit_push(
+    repo_path: Path, files: List[str], message: str, branch_name: str
+) -> None:
     await run_git_command(["git", "-C", str(repo_path), "add", *files])
     await run_git_command(["git", "-C", str(repo_path), "commit", "-m", message])
-    await run_git_command(["git", "-C", str(repo_path), "push", "origin", "main"])
+    await run_git_command(["git", "-C", str(repo_path), "push", "origin", branch_name])

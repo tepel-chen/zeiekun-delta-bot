@@ -8,6 +8,7 @@ import yaml
 
 @dataclass
 class Challenge:
+    branch_name: str
     key: str
     category: str
     folder_name: str
@@ -22,7 +23,9 @@ class Challenge:
     file_hash: str
 
     @staticmethod
-    def collect_from_repo(challenge_root: Path, repo_path: Path) -> List["Challenge"]:
+    def collect_from_repo(
+        challenge_root: Path, repo_path: Path, branch_name: str
+    ) -> List["Challenge"]:
         challenges: List["Challenge"] = []
         if not challenge_root.is_dir():
             return challenges
@@ -76,6 +79,7 @@ class Challenge:
 
             challenges.append(
                 Challenge(
+                    branch_name=branch_name,
                     key=key,
                     category=category,
                     folder_name=name,
@@ -92,3 +96,23 @@ class Challenge:
             )
 
         return challenges
+
+
+def choose_preferred_challenges(challenges: List[Challenge]) -> List[Challenge]:
+    by_key: Dict[str, Challenge] = {}
+
+    for challenge in challenges:
+        current = by_key.get(challenge.key)
+        if current is None:
+            by_key[challenge.key] = challenge
+            continue
+
+        current_priority = (0 if current.branch_name == "main" else 1, current.branch_name)
+        challenge_priority = (
+            0 if challenge.branch_name == "main" else 1,
+            challenge.branch_name,
+        )
+        if challenge_priority < current_priority:
+            by_key[challenge.key] = challenge
+
+    return list(by_key.values())

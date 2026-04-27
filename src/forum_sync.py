@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import urllib.parse
-from pathlib import Path
 from typing import List, Tuple
 
 import discord
@@ -31,7 +30,7 @@ def format_thread_name(challenge: Challenge) -> str:
 def build_challenge_embed(challenge: Challenge, repo_base: str) -> discord.Embed:
     title = challenge.display_name or challenge.folder_name or challenge.key
     colour = status_color.get(challenge.status, 0x8a8a8a)
-    url = f"{repo_base}/tree/main/{urllib.parse.quote(challenge.challenge_path)}"
+    url = f"{repo_base}/tree/{urllib.parse.quote(challenge.branch_name)}/{urllib.parse.quote(challenge.challenge_path)}"
 
     embed = discord.Embed(
         title=title,
@@ -55,7 +54,7 @@ def build_challenge_embed(challenge: Challenge, repo_base: str) -> discord.Embed
         )
     if challenge.tags:
         embed.add_field(name="Tags", value=", ".join(challenge.tags), inline=False)
-    embed.set_footer(text=f"Challenge path: {challenge.challenge_path}")
+    embed.set_footer(text=f"Branch: {challenge.branch_name} | Challenge path: {challenge.challenge_path}")
     return embed
 
 
@@ -97,6 +96,9 @@ async def ensure_challenge_threads(
     challenges: List[Challenge],
     repo_base: str,
 ) -> Tuple[List[str], List[str]]:
+    if not challenges:
+        return [], []
+
     state = load_thread_state()
     created: List[str] = []
     updated: List[str] = []
@@ -123,7 +125,7 @@ async def ensure_challenge_threads(
                 "hash": current_hash,
                 "tag_ids": [tag.id for tag in tags],
             }
-            upsert_thread_state(state_key, state[state_key])
+            upsert_thread_state(challenge.branch_name, state_key, state[state_key])
             created.append(state_key)
             continue
 
@@ -137,7 +139,7 @@ async def ensure_challenge_threads(
             record["hash"] = current_hash
             record["tag_ids"] = [tag.id for tag in tags]
             state[state_key] = record
-            upsert_thread_state(state_key, record)
+            upsert_thread_state(challenge.branch_name, state_key, record)
             updated.append(state_key)
         else:
             record.setdefault("thread_id", thread.id)
@@ -145,6 +147,6 @@ async def ensure_challenge_threads(
                 record.setdefault("message_id", message_id)
             record.setdefault("tag_ids", [tag.id for tag in tags])
             state[state_key] = record
-            upsert_thread_state(state_key, record)
+            upsert_thread_state(challenge.branch_name, state_key, record)
 
     return created, updated

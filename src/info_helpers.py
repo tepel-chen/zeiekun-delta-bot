@@ -34,6 +34,10 @@ def status_rank(value: Optional[str]) -> int:
     return STATUS_ORDER.get(value.lower(), 50)
 
 
+def challenge_state_key(challenge: Challenge) -> str:
+    return challenge.key
+
+
 def format_challenge_line(
     challenge: Challenge,
     thread_record: Optional[Dict[str, int]],

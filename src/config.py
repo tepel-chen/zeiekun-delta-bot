@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from urllib.parse import quote
 
 from dotenv import load_dotenv
 
@@ -29,4 +30,8 @@ FORUM_CHANNEL_ID = require_env_int("FORUM_CHANNEL_ID")
 GITHUB_REPO_URL = require_env_variable("GITHUB_REPO_URL")
 CATEGORY_ID = require_env_int("CATEGORY_ID")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CHALLENGE_REPO_PATH = PROJECT_ROOT / "challenge_repo"
+CHALLENGE_REPOS_PATH = PROJECT_ROOT / "challenge_repos"
+
+
+def get_challenge_repo_path(branch_name: str) -> Path:
+    return CHALLENGE_REPOS_PATH / quote(branch_name, safe="")
