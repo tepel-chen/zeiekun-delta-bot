@@ -85,8 +85,10 @@ def resolve_forum_tags_by_ids(
 
 
 def calculate_repo_base(repo_url: str) -> str:
-    base = repo_url[:-4] if repo_url.endswith(".git") else repo_url
-    return base.rstrip("/")
+    suffix = repo_url.removeprefix("git@github.com:")
+    if suffix.endswith(".git"):
+        suffix = suffix[:-4]
+    return f"https://github.com/{suffix}"
 
 
 async def get_forum_channel(bot: discord.Client, forum_channel_id: int) -> discord.ForumChannel:

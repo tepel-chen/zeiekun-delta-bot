@@ -32,6 +32,9 @@ CATEGORY_ID = require_env_int("CATEGORY_ID")
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CHALLENGE_REPOS_PATH = PROJECT_ROOT / "challenge_repos"
 
+if not GITHUB_REPO_URL.startswith("git@github.com:"):
+    raise SystemExit("GITHUB_REPO_URL must use git@github.com:<owner>/<repo>.git")
+
 
 def get_challenge_repo_path(branch_name: str) -> Path:
     return CHALLENGE_REPOS_PATH / quote(branch_name, safe="")
