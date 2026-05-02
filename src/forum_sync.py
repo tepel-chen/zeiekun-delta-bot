@@ -120,10 +120,10 @@ async def ensure_challenge_threads(
         cached_hash = record.get("hash")
         current_hash = challenge.file_hash
 
+        thread_name = format_thread_name(challenge)
         tags = await build_challenge_tags(challenge, forum_channel)
         thread = forum_channel.get_thread(thread_id) if thread_id else None
         if thread is None:
-            thread_name = format_thread_name(challenge)
             embed = build_challenge_embed(challenge, repo_base)
             thread, message = await forum_channel.create_thread(
                 name=thread_name, embed=embed, applied_tags=tags
@@ -139,6 +139,7 @@ async def ensure_challenge_threads(
             continue
 
         if current_hash is not None and current_hash != cached_hash:
+            await thread.edit(name=thread_name)
             message_target_id = message_id or thread.id
             message = await thread.fetch_message(message_target_id)
             await message.edit(embed=build_challenge_embed(challenge, repo_base))
