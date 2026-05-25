@@ -53,7 +53,7 @@ async def sync_repository_branch(repo_url: str, repo_path: Path, branch_name: st
                 ]
             )
         await run_git_command(
-            ["git", "-C", str(repo_path), "pull", "--ff-only", "origin", branch_name]
+            ["git", "-C", str(repo_path), "reset", "--hard", f"origin/{branch_name}"]
         )
         return f"`{branch_name}` ブランチの最新状態を取得しました。"
 
