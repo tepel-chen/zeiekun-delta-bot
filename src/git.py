@@ -1,12 +1,24 @@
 import asyncio
+import os
 from pathlib import Path
 from typing import List
 
 
+def normalize_repo_url(repo_url: str) -> str:
+    prefix = "git@github.com:"
+    if repo_url.startswith(prefix):
+        repository_path = repo_url.removeprefix(prefix).lstrip("/")
+        return f"ssh://git@ssh.github.com:443/{repository_path}"
+    return repo_url
+
+
 async def run_git_command(cmd: List[str], cwd: str | None = None) -> bytes:
+    environment = os.environ.copy()
+    environment["GIT_SSH_COMMAND"] = "ssh -o HostKeyAlias=github.com"
     process = await asyncio.create_subprocess_exec(
         *cmd,
         cwd=cwd,
+        env=environment,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -34,8 +46,12 @@ async def local_branch_exists(repo_path: Path, branch_name: str) -> bool:
 
 
 async def sync_repository_branch(repo_url: str, repo_path: Path, branch_name: str) -> str:
+    network_repo_url = normalize_repo_url(repo_url)
     git_dir = repo_path / ".git"
     if git_dir.is_dir():
+        await run_git_command(
+            ["git", "-C", str(repo_path), "remote", "set-url", "origin", network_repo_url]
+        )
         await run_git_command(["git", "-C", str(repo_path), "fetch", "origin", branch_name])
         if await local_branch_exists(repo_path, branch_name):
             await run_git_command(["git", "-C", str(repo_path), "checkout", branch_name])
@@ -59,7 +75,15 @@ async def sync_repository_branch(repo_url: str, repo_path: Path, branch_name: st
 
     repo_path.parent.mkdir(parents=True, exist_ok=True)
     await run_git_command(
-        ["git", "clone", "--branch", branch_name, "--single-branch", repo_url, str(repo_path)]
+        [
+            "git",
+            "clone",
+            "--branch",
+            branch_name,
+            "--single-branch",
+            network_repo_url,
+            str(repo_path),
+        ]
     )
     return f"`{branch_name}` ブランチを `{repo_path.name}` にクローンしました。"
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import urllib.parse
 from typing import List, Tuple
 
@@ -20,6 +21,8 @@ status_color = {
     "playtest": 0x3774e6,
     "done": 0x14f532,
 }
+
+_thread_sync_lock = asyncio.Lock()
 
 
 def format_thread_name(challenge: Challenge) -> str:
@@ -100,6 +103,29 @@ async def get_forum_channel(bot: discord.Client, forum_channel_id: int) -> disco
     return channel
 
 
+async def get_forum_thread(
+    forum_channel: discord.ForumChannel, thread_id: int
+) -> discord.Thread | None:
+    cached_thread = forum_channel.get_thread(thread_id)
+    if cached_thread is not None:
+        return cached_thread
+
+    try:
+        channel = await forum_channel.guild.fetch_channel(thread_id)
+    except discord.NotFound:
+        return None
+    except discord.HTTPException as exc:
+        raise RuntimeError(
+            f"既存スレッド `{thread_id}` の確認に失敗したため、重複作成を中止しました"
+        ) from exc
+
+    if not isinstance(channel, discord.Thread) or channel.parent_id != forum_channel.id:
+        raise RuntimeError(
+            f"保存済みID `{thread_id}` は対象フォーラムのスレッドではありません"
+        )
+    return channel
+
+
 async def ensure_challenge_threads(
     forum_channel: discord.ForumChannel,
     challenges: List[Challenge],
@@ -108,6 +134,15 @@ async def ensure_challenge_threads(
     if not challenges:
         return [], []
 
+    async with _thread_sync_lock:
+        return await _ensure_challenge_threads(forum_channel, challenges, repo_base)
+
+
+async def _ensure_challenge_threads(
+    forum_channel: discord.ForumChannel,
+    challenges: List[Challenge],
+    repo_base: str,
+) -> Tuple[List[str], List[str]]:
     state = load_thread_state()
     created: List[str] = []
     updated: List[str] = []
@@ -122,7 +157,7 @@ async def ensure_challenge_threads(
 
         thread_name = format_thread_name(challenge)
         tags = await build_challenge_tags(challenge, forum_channel)
-        thread = forum_channel.get_thread(thread_id) if thread_id else None
+        thread = await get_forum_thread(forum_channel, thread_id) if thread_id else None
         if thread is None:
             embed = build_challenge_embed(challenge, repo_base)
             thread, message = await forum_channel.create_thread(

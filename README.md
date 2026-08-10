@@ -10,7 +10,7 @@
    ```bash
    cp .env.example .env
    ```
-   `DISCORD_TOKEN`、`GUILD_ID`、`FORUM_CHANNEL_ID`、`GITHUB_REPO_URL` など、Bot と対象フォーラム／リポジトリ用の環境変数を設定してください。`GITHUB_REPO_URL` は `git@github.com:owner/repo.git` 形式を前提にしています。
+   `DISCORD_TOKEN`、`GUILD_ID`、`FORUM_CHANNEL_ID`、`GITHUB_REPO_URL` など、Bot と対象フォーラム／リポジトリ用の環境変数を設定してください。`GITHUB_REPO_URL` は `git@github.com:owner/repo.git` 形式を前提にし、SSH接続にはファイアウォールで遮断されにくい443番ポートを使用します。
    スレッド状態は `branch_state.sqlite3` に保存され、ブランチごとの checkout は `challenge_repos/` 以下に作られます。
 3. Discord デベロッパーポータルでアプリケーションを作成し、**bot** スコープで以下を有効化してください。
 * Manage Channels

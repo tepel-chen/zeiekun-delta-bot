@@ -65,7 +65,7 @@ def register_pull_command(
             )
         except RuntimeError as exc:
             await interaction.followup.send(
-                f"Repository synced but thread creation failed: {exc}", ephemeral=True
+                f"リポジトリ同期またはスレッド更新に失敗しました: {exc}", ephemeral=True
             )
             return
 
